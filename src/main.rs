@@ -1,4 +1,5 @@
 mod representation;
+mod simplex;
 
 use crate::representation::{Constraint, ObjectiveFn, Objective, Relation};
 
@@ -6,7 +7,10 @@ fn convert_to_std_form(objfn: ObjectiveFn, _constraints: Vec<Constraint>) {
     println!("{objfn}");
     let new_objfn = convert_objfn(objfn);
     let (new_objfn, new_constraints) = replace_equality(new_objfn, _constraints);
-    println!("{new_objfn}, {:?}", new_constraints);
+    println!("{new_objfn}");
+    for c in new_constraints {
+        println!("{:?}", c);
+    }
 }
 
 fn convert_objfn(objfn: ObjectiveFn) -> ObjectiveFn {
@@ -53,20 +57,34 @@ fn replace_equality(objfn: ObjectiveFn, constraints: Vec<Constraint>) -> (Object
 
 fn add_nonneg_constraint(objfn: ObjectiveFn, constraints: Vec<Constraint>) -> (ObjectiveFn, Vec<Constraint>) {
     // check which variables have non-negativity constraints
-    let mut nonneg_vars: Vec<char> = vec![];
-    let mut nonneg = true;
-    for constraint in &constraints {
-        for var in &constraint.vars {
-            
+    let vars = objfn.vars.clone();
+    // let mut nonneg_vars: Vec<char> = vec![];
+    for (i, var) in vars.iter().enumerate() {
+        for constraint in &constraints {
+            match constraint.rel {
+                Relation::Geq => {
+                    // variable exists in constraint
+                    if constraint.coeffs[i] != 0.0 {
+                        let idx = constraint.vars.iter().position(|&x| x == *var).unwrap();
+                        if constraint.coeffs[idx] != 0.0 {
+                            // nonneg_vars.push(var);
+                            break;
+                        }
+                    }
+                },
+                _ => continue,
+                
+            }
+            // if constraint.vars.contains(&var) {
+            //     let idx = constraint.vars.iter().position(|&x| x == var).unwrap();
+            //     if constraint.coeffs[idx] != 0.0 {
+            //         nonneg = false;
+            //         break;
+            //     }
+            // }
         }
-        // if constraint.vars.contains(&var) {
-        //     let idx = constraint.vars.iter().position(|&x| x == var).unwrap();
-        //     if constraint.coeffs[idx] != 0.0 {
-        //         nonneg = false;
-        //         break;
-        //     }
-        // }
     }
+
     return (objfn, constraints);
 }
 
